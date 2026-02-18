@@ -1,10 +1,10 @@
-# Active Context: Next.js Starter Template
+# Active Context: AI Interview Platform
 
 ## Current State
 
-**Template Status**: ✅ Ready for development
+**Application Status**: ✅ Fully implemented — AI-powered interview platform
 
-The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. It's ready for AI-assisted expansion to build any type of application.
+The application is a complete multi-module interview platform built on Next.js 16 with MySQL, NextAuth v5, and OpenAI.
 
 ## Recently Completed
 
@@ -14,74 +14,119 @@ The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. I
 - [x] ESLint configuration
 - [x] Memory bank documentation
 - [x] Recipe system for common features
+- [x] **Full AI Interview Platform implementation**:
+  - [x] MySQL database schema (Drizzle ORM)
+  - [x] First-run setup wizard (`/setup`) — 3-step: admin credentials, DB config, AI/app settings
+  - [x] Admin authentication (NextAuth v5 with credentials provider)
+  - [x] Admin config panel (`/admin`) — interview list with status indicators
+  - [x] Manage Interview panel (`/admin/interviews/[id]`) — full CRUD for prompts, participants, settings
+  - [x] Interview chat page (`/interview/[token]`) — participant-facing AI chat interface
+  - [x] Results module (`/admin/interviews/[id]/results`) — session list, AI aggregation, CSV download
+  - [x] All API routes (interviews, participants, chat, results, download, sessions)
+  - [x] Route protection middleware
+
+## Application Architecture
+
+### Modules
+
+| Module | Route | Description |
+|--------|-------|-------------|
+| Setup Wizard | `/setup` | First-run installer (one-time) |
+| Admin Login | `/admin/login` | Password-protected admin access |
+| Admin Panel | `/admin` | Interview list and management |
+| Manage Interview | `/admin/interviews/[id]` | Full interview configuration |
+| Results | `/admin/interviews/[id]/results` | AI analysis + session transcripts + CSV download |
+| Interview Chat | `/interview/[token]` | Participant-facing chat interface |
+
+### API Routes
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/setup` | POST | First-run setup |
+| `/api/interviews` | GET, POST | List/create interviews |
+| `/api/interviews/[id]` | GET, PATCH, DELETE | Interview CRUD |
+| `/api/interviews/[id]/participants` | GET, POST | Participant management |
+| `/api/interviews/[id]/participants/[pid]` | PATCH, DELETE | Edit/remove participant |
+| `/api/interviews/[id]/results` | GET, POST | Get results / generate AI aggregation |
+| `/api/interviews/[id]/download` | GET | Download CSV of all conversations |
+| `/api/interviews/[id]/sessions/[sid]` | GET | Get session transcript |
+| `/api/interview/[token]/chat` | GET, POST | Interview chat (participant-facing) |
+
+### Database Tables
+
+- `system_config` — key/value config store
+- `admin_users` — admin credentials (bcrypt hashed)
+- `interviews` — interview definitions (prompt, token, settings)
+- `interview_participants` — email list per interview
+- `interview_sessions` — individual participant sessions
+- `chat_messages` — all chat messages per session
+- `aggregation_results` — cached AI analysis results
+
+## Key Features
+
+- **Setup wizard**: Writes `.env.local` with DB credentials, admin account, OpenAI key, app URL
+- **Unique interview links**: 48-char nanoid tokens (`/interview/[token]`)
+- **Token limiting**: Per-interview configurable limit (default 5000), enforced per session
+- **Multiple simultaneous users**: Each participant gets their own session token
+- **AI model selection**: GPT-4o, GPT-4o Mini, GPT-4 Turbo, GPT-3.5 Turbo
+- **On-demand aggregation**: Admin triggers AI summary of all sessions
+- **CSV export**: Download all conversation data
+- **Interview activation**: Start/stop controls the link's accessibility
 
 ## Current Structure
 
-| File/Directory | Purpose | Status |
-|----------------|---------|--------|
-| `src/app/page.tsx` | Home page | ✅ Ready |
-| `src/app/layout.tsx` | Root layout | ✅ Ready |
-| `src/app/globals.css` | Global styles | ✅ Ready |
-| `.kilocode/` | AI context & recipes | ✅ Ready |
-
-## Current Focus
-
-The template is ready. Next steps depend on user requirements:
-
-1. What type of application to build
-2. What features are needed
-3. Design/branding preferences
-
-## Quick Start Guide
-
-### To add a new page:
-
-Create a file at `src/app/[route]/page.tsx`:
-```tsx
-export default function NewPage() {
-  return <div>New page content</div>;
-}
+```
+src/
+├── app/
+│   ├── admin/
+│   │   ├── page.tsx                    # Admin panel (interview list)
+│   │   ├── login/page.tsx              # Login page
+│   │   └── interviews/[id]/
+│   │       ├── page.tsx                # Manage interview
+│   │       └── results/page.tsx        # Results module
+│   ├── api/
+│   │   ├── auth/[...nextauth]/route.ts
+│   │   ├── setup/route.ts
+│   │   ├── interview/[token]/chat/route.ts
+│   │   └── interviews/
+│   │       ├── route.ts
+│   │       └── [id]/
+│   │           ├── route.ts
+│   │           ├── participants/route.ts
+│   │           ├── participants/[pid]/route.ts
+│   │           ├── results/route.ts
+│   │           ├── download/route.ts
+│   │           └── sessions/[sid]/route.ts
+│   ├── interview/[token]/page.tsx      # Participant chat page
+│   ├── setup/page.tsx                  # Setup wizard
+│   ├── layout.tsx
+│   ├── page.tsx                        # Redirects to /admin
+│   └── globals.css
+├── db/
+│   ├── schema.ts                       # Drizzle schema
+│   └── index.ts                        # DB connection
+├── lib/
+│   └── auth.ts                         # NextAuth config
+└── middleware.ts                       # Route protection
 ```
 
-### To add components:
+## Environment Variables Required
 
-Create `src/components/` directory and add components:
-```tsx
-// src/components/ui/Button.tsx
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2 bg-blue-600 text-white rounded">{children}</button>;
-}
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=interview_app
+NEXTAUTH_SECRET=<generated>
+NEXTAUTH_URL=https://yourdomain.com
+OPENAI_API_KEY=sk-...
+SETUP_COMPLETE=true
 ```
-
-### To add a database:
-
-Follow `.kilocode/recipes/add-database.md`
-
-### To add API routes:
-
-Create `src/app/api/[route]/route.ts`:
-```tsx
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "Hello" });
-}
-```
-
-## Available Recipes
-
-| Recipe | File | Use Case |
-|--------|------|----------|
-| Add Database | `.kilocode/recipes/add-database.md` | Data persistence with Drizzle + SQLite |
-
-## Pending Improvements
-
-- [ ] Add more recipes (auth, email, etc.)
-- [ ] Add example components
-- [ ] Add testing setup recipe
 
 ## Session History
 
 | Date | Changes |
 |------|---------|
 | Initial | Template created with base setup |
+| 2026-02-18 | Full AI interview platform implemented |
