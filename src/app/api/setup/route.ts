@@ -39,11 +39,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Create database if it doesn't exist
-    await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-    await connection.execute(`USE \`${dbName}\``);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+    await connection.query(`USE \`${dbName}\``);
 
     // Create tables
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS system_config (
         id INT PRIMARY KEY AUTO_INCREMENT,
         \`key\` VARCHAR(255) NOT NULL UNIQUE,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS admin_users (
         id INT PRIMARY KEY AUTO_INCREMENT,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS interviews (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL UNIQUE,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS interview_participants (
         id INT PRIMARY KEY AUTO_INCREMENT,
         interview_id INT NOT NULL,
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS interview_sessions (
         id INT PRIMARY KEY AUTO_INCREMENT,
         interview_id INT NOT NULL,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (
         id INT PRIMARY KEY AUTO_INCREMENT,
         session_id INT NOT NULL,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    await connection.execute(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS aggregation_results (
         id INT PRIMARY KEY AUTO_INCREMENT,
         interview_id INT NOT NULL,
