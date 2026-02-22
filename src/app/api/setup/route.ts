@@ -1,14 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync, existsSync } from "fs";
+import { writeFileSync } from "fs";
 import { join } from "path";
 import bcrypt from "bcryptjs";
 import mysql from "mysql2/promise";
 import { nanoid } from "nanoid";
 
 export async function POST(request: NextRequest) {
-  // Prevent re-running setup
+  // Prevent re-running setup — check env var first, then DB if DB env vars are available
   if (process.env.SETUP_COMPLETE === "true") {
     return NextResponse.json({ error: "Setup already completed" }, { status: 400 });
+  }
+
+  // If DB env vars are set (e.g. on Railway), check the DB for setup_complete
+  if (process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME) {
+    try {
+      const checkConn = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT || "3306"),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD || "",
+        database: process.env.DB_NAME,
+      });
+      const [rows] = await checkConn.query(
+        "SELECT value FROM system_config WHERE `key` = 'setup_complete' LIMIT 1"
+      ) as [Array<{value: string}>, unknown];
+      await checkConn.end();
+      if (rows.length > 0 && rows[0].value === "true") {
+        return NextResponse.json({ error: "Setup already completed" }, { status: 400 });
+      }
+    } catch {
+      // DB not yet set up or table doesn't exist — proceed with setup
+    }
   }
 
   const body = await request.json();
@@ -132,9 +154,15 @@ export async function POST(request: NextRequest) {
       [adminUsername, passwordHash]
     );
 
+    // Store setup_complete in system_config table
+    await connection.execute(
+      "INSERT INTO system_config (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?",
+      ["setup_complete", "true", "true"]
+    );
+
     await connection.end();
 
-    // Write .env.local file
+    // Write .env.local file (works for local dev; Railway uses dashboard env vars)
     const secret = nanoid(64);
     const envContent = [
       `# Database`,
@@ -156,10 +184,25 @@ export async function POST(request: NextRequest) {
       ``,
     ].join("\n");
 
-    const envPath = join(process.cwd(), ".env.local");
-    writeFileSync(envPath, envContent, "utf-8");
+    try {
+      const envPath = join(process.cwd(), ".env.local");
+      writeFileSync(envPath, envContent, "utf-8");
+    } catch {
+      // On Railway/read-only filesystems, .env.local write may fail — that's OK
+      // Setup state is stored in the database
+    }
 
-    return NextResponse.json({ success: true });
+    // Set a cookie so the middleware knows setup is complete
+    // (needed on Railway where .env.local is not read and process restart is required)
+    const response = NextResponse.json({ success: true });
+    response.cookies.set("__setup_complete", "true", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    });
+    return response;
   } catch (error) {
     console.error("Setup error:", error);
     return NextResponse.json(

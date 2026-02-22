@@ -8,8 +8,10 @@ const { auth } = NextAuth(authConfig);
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if app is set up
-  const isSetupComplete = process.env.SETUP_COMPLETE === "true";
+  // Check if app is set up — via env var (local dev / Railway env var) OR cookie (set after setup wizard)
+  const isSetupComplete =
+    process.env.SETUP_COMPLETE === "true" ||
+    request.cookies.get("__setup_complete")?.value === "true";
 
   // Allow setup page always
   if (pathname.startsWith("/setup")) {
