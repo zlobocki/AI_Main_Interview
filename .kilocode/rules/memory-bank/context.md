@@ -130,3 +130,5 @@ SETUP_COMPLETE=true
 |------|---------|
 | Initial | Template created with base setup |
 | 2026-02-18 | Full AI interview platform implemented |
+| 2026-02-22 | Fixed MySQL DDL error (execute→query for DDL statements in setup route) |
+| 2026-02-22 | Fixed post-setup redirect loop on Railway: setup API now sets `__setup_complete` cookie + stores `setup_complete` in `system_config` DB table; middleware checks cookie OR env var |
