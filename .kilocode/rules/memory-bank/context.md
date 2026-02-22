@@ -132,3 +132,4 @@ SETUP_COMPLETE=true
 | 2026-02-18 | Full AI interview platform implemented |
 | 2026-02-22 | Fixed MySQL DDL error (execute→query for DDL statements in setup route) |
 | 2026-02-22 | Fixed post-setup redirect loop on Railway: setup API now sets `__setup_complete` cookie + stores `setup_complete` in `system_config` DB table; middleware checks cookie OR env var |
+| 2026-02-22 | Fixed NextAuth "Server error / server configuration" on Railway: added `trustHost: true` to auth config (Railway production has no AUTH_URL/AUTH_TRUST_HOST env vars); also fixed admin user INSERT to use ON DUPLICATE KEY UPDATE so partial setup re-runs don't fail |
