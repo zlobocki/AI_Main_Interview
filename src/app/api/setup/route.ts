@@ -147,10 +147,10 @@ export async function POST(request: NextRequest) {
       )
     `);
 
-    // Create admin user
+    // Create admin user (upsert to handle re-runs gracefully)
     const passwordHash = await bcrypt.hash(adminPassword, 12);
     await connection.execute(
-      "INSERT INTO admin_users (username, password_hash) VALUES (?, ?)",
+      "INSERT INTO admin_users (username, password_hash) VALUES (?, ?) ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)",
       [adminUsername, passwordHash]
     );
 

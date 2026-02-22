@@ -10,7 +10,8 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-change-in-production",
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "fallback-secret-change-in-production",
+  trustHost: true,
   callbacks: {
     authorized({ auth }) {
       return !!auth?.user;
