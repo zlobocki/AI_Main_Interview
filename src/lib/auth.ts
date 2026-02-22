@@ -38,7 +38,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             id: String(user.id),
             name: user.username,
           };
-        } catch {
+        } catch (err) {
+          console.error("[auth] authorize error:", err);
           return null;
         }
       },

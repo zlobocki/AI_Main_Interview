@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function LoginForm() {
   const router = useRouter();
@@ -84,6 +85,15 @@ function LoginForm() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
+
+          <div className="mt-4 text-center">
+            <Link
+              href="/admin/reset-password"
+              className="text-gray-500 hover:text-gray-400 text-sm transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
       </div>
     </div>
