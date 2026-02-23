@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SetupPage() {
@@ -8,6 +8,7 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
+  const [prefillLoaded, setPrefillLoaded] = useState(false);
   const [form, setForm] = useState({
     adminUsername: "",
     adminPassword: "",
@@ -20,6 +21,26 @@ export default function SetupPage() {
     openaiApiKey: "",
     appUrl: "",
   });
+
+  // Pre-fill DB fields from current environment variables (important on Railway
+  // where DB credentials are set as env vars and must match what the app uses)
+  useEffect(() => {
+    fetch("/api/setup/prefill")
+      .then((r) => r.json())
+      .then((data) => {
+        setForm((f) => ({
+          ...f,
+          dbHost: data.dbHost || f.dbHost,
+          dbPort: data.dbPort || f.dbPort,
+          dbUser: data.dbUser || f.dbUser,
+          dbName: data.dbName || f.dbName,
+          appUrl: data.appUrl || f.appUrl,
+          // Leave dbPassword blank — user must enter it (we can't expose it)
+        }));
+        setPrefillLoaded(true);
+      })
+      .catch(() => setPrefillLoaded(true));
+  }, []);
 
   const update = (field: string, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -166,6 +187,11 @@ export default function SetupPage() {
                 <h2 className="text-lg font-semibold text-white mb-4">
                   Database Configuration
                 </h2>
+                {prefillLoaded && (form.dbHost !== "localhost" || form.dbUser) && (
+                  <div className="bg-blue-900/30 border border-blue-700 rounded-lg px-4 py-3 text-blue-300 text-sm">
+                    ℹ️ Fields pre-filled from your current environment configuration. Please verify they are correct and enter your database password.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">
@@ -224,8 +250,11 @@ export default function SetupPage() {
                     value={form.dbPassword}
                     onChange={(e) => update("dbPassword", e.target.value)}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500"
-                    placeholder="Leave blank if none"
+                    placeholder="Enter your database password (required if set)"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Must match the password for the MySQL user above
+                  </p>
                 </div>
                 <div className="flex gap-3">
                   <button
