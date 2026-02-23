@@ -13,8 +13,12 @@ export async function middleware(request: NextRequest) {
     process.env.SETUP_COMPLETE === "true" ||
     request.cookies.get("__setup_complete")?.value === "true";
 
-  // Allow setup page always
+  // Allow setup pages always (/setup and /setup/reset)
   if (pathname.startsWith("/setup")) {
+    // /setup/reset is always accessible regardless of setup state
+    if (pathname.startsWith("/setup/reset")) {
+      return NextResponse.next();
+    }
     if (isSetupComplete) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
